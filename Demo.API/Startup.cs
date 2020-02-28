@@ -62,8 +62,8 @@
             this.Configuration = builder.Build();
 
             var columnOptions = new ColumnOptions
-            {
-                AdditionalDataColumns = new Collection<DataColumn>
+                                    {
+                                        AdditionalDataColumns = new Collection<DataColumn>
                                                                     {
                                                                         new DataColumn
                                                                             {
@@ -76,7 +76,7 @@
                                                                                 ColumnName = "Other"
                                                                             }
                                                                     }
-            };
+                                    };
 
             columnOptions.Store.Add(StandardColumn.LogEvent);
 
@@ -128,6 +128,8 @@
             }
 
             this.CreateUsersAndRolesAndCheckList(serviceProvider).Wait();
+
+            app.UseWelcomePage();
         }
 
         public void ConfigureIoC(IServiceCollection services, Container container)
@@ -249,13 +251,13 @@
             if (superadmin == null)
             {
                 var poweruser = new ApplicationUser
-                {
-                    UserName = "superadmin@email.com",
-                    Email = "superadmin@email.com",
-                    FirstName = "Master",
-                    LastName = "Admin",
-                    Disabled = false
-                };
+                                    {
+                                        UserName = "superadmin@email.com",
+                                        Email = "superadmin@email.com",
+                                        FirstName = "Master",
+                                        LastName = "Admin",
+                                        Disabled = false
+                                    };
                 var adminPassword = "Password123#";
 
                 var createPowerUser = await userManager.CreateAsync(poweruser, adminPassword);
@@ -277,13 +279,13 @@
             if (user == null)
             {
                 var poweruser = new ApplicationUser
-                {
-                    UserName = "dhameliyakaushik13@email.com",
-                    Email = "dhameliyakaushik13@email.com",
-                    FirstName = "Kaushik",
-                    LastName = "Dhameliya",
-                    Disabled = false
-                };
+                                    {
+                                        UserName = "dhameliyakaushik13@email.com",
+                                        Email = "dhameliyakaushik13@email.com",
+                                        FirstName = "Kaushik",
+                                        LastName = "Dhameliya",
+                                        Disabled = false
+                                    };
                 var adminPassword = "Password123#";
 
                 var createPowerUser = await userManager.CreateAsync(poweruser, adminPassword);
@@ -291,7 +293,7 @@
                 {
                     poweruser.EmailConfirmed = true;
                     await userManager.UpdateAsync(poweruser);
-                    await userManager.AddToRoleAsync(poweruser, RolesNames.SuperAdmin);
+                    await userManager.AddToRoleAsync(poweruser, RolesNames.User);
 
                     await userManager.AddClaimAsync(poweruser, new Claim("userName", poweruser.UserName));
                     await userManager.AddClaimAsync(poweruser, new Claim("firstName", poweruser.FirstName));

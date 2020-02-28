@@ -1,9 +1,12 @@
 ﻿namespace Demo.API.Controllers
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Security.Claims;
     using System.Threading.Tasks;
+    using System.Web;
 
     using Demo.API.Extensions;
     using Demo.API.Interfaces;
@@ -76,6 +79,37 @@
                 }
 
                 response.Data = await this._userRepository.UpdateUserStatus(userId, false);
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessages.Add(new ValidationFailure(string.Empty, ex.Message));
+            }
+
+            return response;
+        }
+
+        [HttpPost("changepassword")]
+        [Authorize(Roles = RolesNames.User)]
+        public async Task<ServiceResponse<bool>> ChangePassword(ChangePasswordModel model)
+        {
+            var response = new ServiceResponse<bool>();
+            try
+            {
+                var validation = new ChangePasswordModelValidator(model);
+                var results = validation.Validate(model);
+
+                response.ErrorMessages = results.Errors.ToList();
+
+                if (response.Successful)
+                {
+                    var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                    var user = await this._userManager.FindByIdAsync(userId);
+                    var result = await this._userManager.ChangePasswordAsync(
+                                     user,
+                                     model.OldPassword,
+                                     model.NewPassword);
+                    response.Data = result.Succeeded;
+                }
             }
             catch (Exception ex)
             {
@@ -210,9 +244,8 @@
                 }
 
                 var code = await this._userManager.GeneratePasswordResetTokenAsync(user);
-                code = HttpUtility.UrlEncode(code);
                 var callbackUrl =
-                    $"{new Uri(this._iconfiguration["Cors:AllowedOrigin"])}registration/resetpassword?userid={user.Id}&code={code}";
+                    $"{new Uri(this._iconfiguration["Cors:AllowedOrigin"])}/resetpassword?userid={user.Id}&code={code}";
 
                 var forgotpasswordFile =
                     $"{this._env.WebRootPath}{Path.DirectorySeparatorChar}EmailTemplate{Path.DirectorySeparatorChar}ForgotPassword.html";
@@ -232,6 +265,24 @@
             {
                 response.ErrorMessages.Add(
                     new ValidationFailure(string.Empty, "Please check your email to reset your password."));
+            }
+
+            return response;
+        }
+
+        [HttpGet("getallusers")]
+        [Authorize(Roles = RolesNames.User)]
+        public async Task<ServiceResponse<List<ApplicationUser>>> GetAllUsers()
+        {
+            var response = new ServiceResponse<List<ApplicationUser>>();
+            try
+            {
+                var users = await this._userManager.GetUsersInRoleAsync(RolesNames.User);
+                response.Data = users.ToList();
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessages.Add(new ValidationFailure(string.Empty, ex.Message));
             }
 
             return response;
@@ -292,7 +343,7 @@
                                        };
                 }
             }
-            catch
+            catch (Exception ex)
             {
                 response.ErrorMessages.Add(new ValidationFailure(model.Email, "Invalid login attempt."));
             }
@@ -337,7 +388,7 @@
                 {
                     user.EmailConfirmed = false;
                     await this._userManager.UpdateAsync(user);
-                    await this._userManager.AddToRoleAsync(user, RolesNames.SuperAdmin);
+                    await this._userManager.AddToRoleAsync(user, RolesNames.User);
 
                     var code = await this._userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = HttpUtility.UrlEncode(code);
