@@ -210,6 +210,7 @@
                 }
 
                 var code = await this._userManager.GeneratePasswordResetTokenAsync(user);
+                code = HttpUtility.UrlEncode(code);
                 var callbackUrl =
                     $"{new Uri(this._iconfiguration["Cors:AllowedOrigin"])}registration/resetpassword?userid={user.Id}&code={code}";
 
@@ -339,6 +340,7 @@
                     await this._userManager.AddToRoleAsync(user, RolesNames.SuperAdmin);
 
                     var code = await this._userManager.GenerateEmailConfirmationTokenAsync(user);
+                    code = HttpUtility.UrlEncode(code);
                     var callbackUrl =
                         $"{new Uri(this._iconfiguration["Cors:AllowedOrigin"])}/register?userid={user.Id}&code={code}";
 
